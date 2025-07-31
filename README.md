@@ -2,5 +2,7 @@
 
 ### Structure Example
 Category_N
+<br>
 -> Model_M
-->->Sample_K_Male/Female
+<br>
+->-> Sample_K_Male/Female
