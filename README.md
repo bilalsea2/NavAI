@@ -49,4 +49,4 @@ Telegram bot for anonymous benchmarking of Uzbek TTS models (female voices). Use
 
 ## Data
 
-Results are saved in `survey_results.csv` in the `data/` directory.
+Results are saved in `phase1_results.csv` and `phase2_results.csv` in the `data/` directory.
