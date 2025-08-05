@@ -23,10 +23,10 @@ ANONYMOUS_TO_ACTUAL_MAPPING = dict(zip(ANONYMOUS_LABELS, ACTUAL_MODELS))
 
 # Rating Questions and Callback Data Prefixes
 RATING_QUESTIONS = [
-    ("How natural does the voice sound? (1: robotic → 5: completely human-like)", "naturalness"),
-    ("How clear and understandable is the speech? (1: unclear → 5: very clear)", "clarity"),
-    ("How well is the emotional tone conveyed? (1: flat/monotone → 5: expressive/engaging)", "emotional_tone"),
-    ("How pleasant is the voice to listen to? (1: unpleasant → 5: very pleasant)", "overall_preference_phase1"),
+    ("Ovoz qanchalik tabiiy eshitiladi? (1: robotik → 5: to‘liq insondek)", "naturalness"),
+    ("Nutq qanchalik aniq va tushunarli? (1: noaniq → 5: juda aniq)", "clarity"),
+    ("Emotsional ohang qanchalik yaxshi yetkazilgan? (1: xira/monoton → 5: ifodali/qiziqarli)", "emotional_tone"),
+    ("Ovoz tinglash uchun qanchalik yoqimli? (1: yoqimsiz → 5: juda yoqimli)", "overall_preference_phase1"),
 ]
 RATING_SCALE = [1, 2, 3, 4, 5]
 
