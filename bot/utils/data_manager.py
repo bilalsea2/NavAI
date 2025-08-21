@@ -16,7 +16,7 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 
 def get_db_connection():
     """Returns a psycopg2 connection to Postgres."""
-    return psycopg2.connect(DATABASE_URL, sslmode="require")
+    return psycopg2.connect(DATABASE_URL)
 
 
 def init_postgres_tables():
