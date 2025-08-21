@@ -2,7 +2,7 @@ import logging
 import random
 from datetime import datetime
 
-from aiogram import Router, F
+from aiogram import Router, F, types
 from aiogram.types import Message, CallbackQuery, FSInputFile
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
@@ -59,12 +59,20 @@ async def send_next_audio_clip_or_finish_phase1(message: Message, state: FSMCont
     # Check if a new sentence needs to be started (i.e., all 5 models for current sentence evaluated)
     if current_model_idx == 0:
         # Check if all sentences across all categories have been covered
+
         if current_category_idx >= len(CATEGORIES):
-            # All categories and prompts covered, move to Phase 2
-            logger.info(f"User {user_id} completed Phase 1. Moving to Phase 2.")
-            await state.set_state(SurveyStates.PHASE2_PREFERENCE)
-            await ask_phase2_preference(message, state)
+            active_prompt_idx = data.get("active_prompt_idx")
+
+            logger.info(f"User {user_id} finished prompt {active_prompt_idx+1}.")
+            await message.answer(
+                f"Siz prompt {active_prompt_idx+1}-ni yakunladingiz ✅\n\n"
+                "Keyinroq boshqa promptlarni /prompt_1 /prompt_2 /prompt_3 orqali davom ettirishingiz mumkin."
+            )
+
+            # End survey for this prompt only
+            await state.clear()
             return
+
 
         current_category = CATEGORIES[current_category_idx]
         current_prompt = PROMPT_NUMBERS[current_prompt_idx]
@@ -121,11 +129,14 @@ async def send_next_audio_clip_or_finish_phase1(message: Message, state: FSMCont
             reply_markup=get_rating_keyboard(RATING_QUESTIONS[0][1])
         )
     else:
-        # All models for the current sentence evaluated, move to next sentence/category
-        current_prompt_idx += 1
-        if current_prompt_idx >= len(PROMPT_NUMBERS):
-            current_prompt_idx = 0
-            current_category_idx += 1
+        # Move to next category (not next prompt!)
+        current_category_idx += 1
+        
+        await state.update_data(
+            current_category_idx=current_category_idx,
+            current_model_idx=0,
+            current_sentence_audio_order=[]
+        )
         
         await state.update_data(
             current_category_idx=current_category_idx,
@@ -300,3 +311,34 @@ async def handle_unexpected_text(message: Message, state: FSMContext):
             await message.answer("Iltimos, izohingizni yozing yoki /skip buyrug‘ini yuboring.")
     else:
         await message.answer("So‘rovnoma davom etmoqda. Kutilmagan ma'lumot yuborildi.")
+
+# prompt_id
+async def initiate_prompt(message: Message, state: FSMContext, prompt_idx: int):
+    user_id = message.from_user.id
+    logger.info(f"User {user_id} starting prompt {prompt_idx+1}")
+
+    await state.set_data({
+        "current_category_idx": 0,
+        "current_prompt_idx": prompt_idx,   # 👈 set specific prompt
+        "current_model_idx": 0,
+        "current_sentence_audio_order": [],
+        "current_clip_ratings": [],
+        "all_phase1_data": [],
+        "active_prompt_idx": prompt_idx     # track which /prompt_x user chose
+    })
+    await state.set_state(SurveyStates.PHASE1_SENDING_AUDIO)
+    await send_next_audio_clip_or_finish_phase1(message, state)
+
+# separate handlers for each prompts
+
+@router.message(commands=["prompt_1"])
+async def start_prompt_1(message: Message, state: FSMContext):
+    await initiate_prompt(message, state, prompt_idx=0)
+
+@router.message(commands=["prompt_2"])
+async def start_prompt_2(message: Message, state: FSMContext):
+    await initiate_prompt(message, state, prompt_idx=1)
+
+@router.message(commands=["prompt_3"])
+async def start_prompt_3(message: Message, state: FSMContext):
+    await initiate_prompt(message, state, prompt_idx=2)
