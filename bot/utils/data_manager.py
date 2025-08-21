@@ -4,7 +4,7 @@ import csv
 import pandas as pd
 import logging
 from datetime import datetime
-import psycopg2-binary
+import psycopg2
 from psycopg2.extras import execute_values
 
 from bot.config import (
