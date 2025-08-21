@@ -51,6 +51,22 @@ async def initiate_prompt(message: Message, state: FSMContext, prompt_idx: int):
     await state.set_state(SurveyStates.PHASE1_SENDING_AUDIO)
     await send_next_audio_clip_or_finish_phase1(message, state)
 
+async def initiate_phase_2(message: Message, state: FSMContext):
+    user_id = message.from_user.id
+    logger.info(f"User {user_id} starting Phase 2")
+
+    await state.set_data({
+        "user_id": user_id,
+        "current_category_idx": 0,
+        "current_prompt_idx": 0,
+        "current_model_idx": 0,
+        "current_sentence_audio_order": [],
+        "current_clip_ratings": [],
+        "all_phase1_data": [],
+        "active_prompt_idx": 0
+    })
+    await ask_phase2_preference(message, state)
+
 # separate handlers for each prompts
 
 @router.message(Command("prompt_1"))
@@ -81,6 +97,15 @@ async def start_prompt_3(message: Message, state: FSMContext):
         return
     await initiate_prompt(message, state, prompt_idx=2)
 
+@router.message(Command("phase_2"))
+async def start_phase_2(message: Message, state: FSMContext):
+    data = await state.get_data()
+    user_id = data.get("user_id")
+    if user_id in get_completed_users():
+        await message.answer("✅ Siz so'rovnomani allaqachon tugallagansiz.")
+        return
+    await initiate_prompt(message, state, prompt_idx=0)
+
 async def send_next_audio_clip_or_finish_phase1(message: Message, state: FSMContext):
     data = await state.get_data()
     user_id = data.get("user_id")
@@ -107,9 +132,11 @@ async def send_next_audio_clip_or_finish_phase1(message: Message, state: FSMCont
             if all_phase1_data:
                 print(user_id)
                 append_phase1_data(user_id, all_phase1_data, prompt_id=active_prompt_idx+1)
-
-            # End survey for this prompt only
-            await state.clear()
+            if all(has_completed_prompt(user_id, pid) for pid in PROMPT_NUMBERS):
+                await initiate_phase_2(message, state)
+            else:
+                # End survey for this prompt only
+                await state.clear()
             return
 
 

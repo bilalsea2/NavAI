@@ -49,6 +49,11 @@ async def start_command(message: Message, state: FSMContext):
         "\n\nHar bir tugallanmagan promptni yuqoridagi buyruqlar orqali boshlashingiz mumkin."
     )
 
+    if all(has_completed_prompt(user_id, pid) for pid in PROMPT_NUMBERS):
+        progress_text += ("\n\n🎯 Siz barcha promptlarni tugalladingiz! "
+        "Endi umumiy afzal ko‘rgan modelni tanlash uchun Phase 2 ga o‘ting.\n"
+        "Boshlash uchun /phase_2 ni bosing.")
+
     await message.answer(welcome_message + "\n\n" + progress_text)
     await state.clear()
 
