@@ -18,7 +18,7 @@ from bot.config import (
 )
 from bot.keyboards import get_rating_keyboard, get_phase2_preference_keyboard, RatingCallback, PreferenceCallback
 from bot.utils.audio_manager import get_audio_path
-from bot.utils.data_manager import append_phase1_data, append_phase2_data, has_completed_prompt, save_csv_to_postgres
+from bot.utils.data_manager import append_phase1_data, append_phase2_data, has_completed_prompt, save_csv_to_postgres, get_completed_users
 
 logger = logging.getLogger(__name__)
 router = Router()
@@ -101,7 +101,7 @@ async def start_prompt_3(message: Message, state: FSMContext):
 async def start_phase_2(message: Message, state: FSMContext):
     data = await state.get_data()
     user_id = data.get("user_id")
-    if user_id in get_completed_users():
+    if user_id in get_completed_users().keys():
         await message.answer("✅ Siz so'rovnomani allaqachon tugallagansiz.")
         return
     await initiate_prompt(message, state, prompt_idx=0)
