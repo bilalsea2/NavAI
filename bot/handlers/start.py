@@ -25,13 +25,13 @@ async def start_command(message: Message, state: FSMContext):
 
     welcome_message = (
         "O‘zbek TTS modellarini baholash so‘rovnomasiga xush kelibsiz!\n\n"
-        "Ushbu anonim so‘rovnomada siz turli matndan nutqqa (TTS) modellarni baholashda yordam berasiz. "
+        "Ushbu anonim so‘rovnomada siz 5ta turli matndan nutqqa (TTS) modellarni baholashda yordam berasiz. "
         "Siz bir nechta audio fayllarni tinglaysiz va ularni turli mezonlar bo‘yicha baholaysiz. "
         "Sizning fikringiz TTS texnologiyalarini yaxshilash uchun juda muhim.\n\n"
         "So‘rovnoma ikki bosqichdan iborat:\n"
         "\t• **1-bosqich:** Siz \"News\", \"Literature\", \"Technical\" kategoriyalaridagi 15 ta turli audio faylni tinglaysiz. Har bir faylni tabiiylik, aniqlik, hissiy ohang va yoqimlilik bo‘yicha baholaysiz.\n"
         "\t• **2-bosqich:** Barcha fayllarni baholagandan so‘ng, siz umumiy afzal ko‘rgan modelni tanlaysiz va ixtiyoriy izoh qoldirishingiz mumkin.\n\n"
-        "Barcha modellar anonim tarzda (masalan, A, B, C) taqdim etiladi. "
+        "Barcha modellar anonim tarzda A, B, C, D, E ko'rinishida taqdim etiladi. "
         "Sizning javoblaringiz maxfiy saqlanadi va faqat tadqiqot maqsadlarida ishlatiladi.\n\n"
         "Boshlaymiz!"
     )
