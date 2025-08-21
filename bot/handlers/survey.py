@@ -51,6 +51,7 @@ async def initiate_prompt(message: Message, state: FSMContext, prompt_idx: int):
     await state.set_state(SurveyStates.PHASE1_SENDING_AUDIO)
     if has_completed_prompt(user_id, prompt_idx):
         await message.answer("Siz bu topshiriqni allaqachon bajargansiz.")
+        return
     else:
         await send_next_audio_clip_or_finish_phase1(message, state)
 
