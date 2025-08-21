@@ -44,6 +44,7 @@ Telegram bot for anonymous benchmarking of Uzbek TTS models (female voices). Use
 
 -   `/start` — Begin the survey (if not completed before)
 -   `/admin_results_summary` — Show survey summary (admin only)
+-   `/admin_prompt_results prompt_id` - Results for chosen prompt_id (admin only)
 -   `/admin_export_csv` — Export results CSV (admin only)
 -   `/admin_test` — Test admin panel (admin only)
 

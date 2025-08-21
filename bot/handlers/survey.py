@@ -49,7 +49,10 @@ async def initiate_prompt(message: Message, state: FSMContext, prompt_idx: int):
         "active_prompt_idx": prompt_idx     # track which /prompt_x user chose
     })
     await state.set_state(SurveyStates.PHASE1_SENDING_AUDIO)
-    await send_next_audio_clip_or_finish_phase1(message, state)
+    if has_completed_prompt(user_id, prompt_idx):
+        await message.answer("Siz bu topshiriqni allaqachon bajargansiz.")
+    else:
+        await send_next_audio_clip_or_finish_phase1(message, state)
 
 # separate handlers for each prompts
 
@@ -189,10 +192,7 @@ async def send_next_audio_clip_or_finish_phase1(message: Message, state: FSMCont
             current_sentence_audio_order=[] # Clear order for new sentence
         )
         await state.set_state(SurveyStates.PHASE1_SENDING_AUDIO)
-        if has_completed_prompt(user_id, current_prompt_idx):
-            await message.answer("Siz bu topshiriqni allaqachon bajargansiz.")
-        else:
-            await send_next_audio_clip_or_finish_phase1(message, state)
+        await send_next_audio_clip_or_finish_phase1(message, state)
 
 @router.callback_query(RatingCallback.filter(), SurveyStates.PHASE1_RATING_QUESTION_1)
 @router.callback_query(RatingCallback.filter(), SurveyStates.PHASE1_RATING_QUESTION_2)
