@@ -6,12 +6,16 @@ import logging
 from datetime import datetime
 import psycopg2
 from psycopg2.extras import execute_values
+import dotenv
+
+load_dotenv()
 
 from bot.config import (
     PHASE1_RESULTS_CSV, PHASE2_RESULTS_CSV,
-    PHASE1_HEADERS, PHASE2_HEADERS,
-    DATABASE_URL
+    PHASE1_HEADERS, PHASE2_HEADERS
 )
+DATABASE_URL = os.getenv("DATABASE_URL")
+
 
 logger = logging.getLogger(__name__)
 
