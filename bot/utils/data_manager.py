@@ -6,6 +6,7 @@ import logging
 from datetime import datetime
 import psycopg2
 from psycopg2.extras import execute_values
+from psycopg2 import OperationalError
 from dotenv import load_dotenv
 
 from bot.config import PHASE1_RESULTS_CSV, PHASE2_RESULTS_CSV, PHASE1_HEADERS, PHASE2_HEADERS
@@ -14,9 +15,19 @@ logger = logging.getLogger(__name__)
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 
-def get_db_connection():
-    """Returns a psycopg2 connection to Postgres."""
-    return psycopg2.connect(DATABASE_URL)
+
+def get_db_connection(retries=5, delay=3):
+    """Try to connect to Postgres with retries"""
+    for i in range(retries):
+        try:
+            conn = psycopg2.connect(DATABASE_URL)
+            return conn
+        except OperationalError as e:
+            if i < retries - 1:
+                print(f"Postgres not ready yet, retrying in {delay}s... ({i+1}/{retries})")
+                time.sleep(delay)
+            else:
+                raise e
 
 
 def init_postgres_tables():
