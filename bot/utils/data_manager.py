@@ -8,19 +8,11 @@ import psycopg2
 from psycopg2.extras import execute_values
 from dotenv import load_dotenv
 
-load_dotenv()
-
-from bot.config import (
-    PHASE1_RESULTS_CSV, PHASE2_RESULTS_CSV,
-    PHASE1_HEADERS, PHASE2_HEADERS
-)
-DATABASE_URL = os.getenv("DATABASE_URL")
-
+from bot.config import PHASE1_RESULTS_CSV, PHASE2_RESULTS_CSV, PHASE1_HEADERS, PHASE2_HEADERS
 
 logger = logging.getLogger(__name__)
 
-
-# ---------------------- POSTGRES HELPERS ----------------------
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 def get_db_connection():
     """Returns a psycopg2 connection to Postgres."""
@@ -110,7 +102,42 @@ def save_csv_to_postgres():
         conn.commit()
 
 
-# ---------------------- EXISTING FUNCTIONS ----------------------
+def has_completed_prompt(user_id: int, prompt_id: int) -> bool:
+    """
+    Check if a user already completed ratings for a given category & prompt_id.
+    Uses pandas for consistency with get_completed_users.
+    """
+    if not os.path.exists(PHASE1_RESULTS_CSV) or os.path.getsize(PHASE1_RESULTS_CSV) == 0:
+        return False
+
+    try:
+        df = pd.read_csv(PHASE1_RESULTS_CSV, usecols=['user_id', 'prompt_id'], dtype={'user_id': str, 'prompt_id': str})
+        match = df[(df['user_id'] == str(user_id)) & (df['prompt_id'] == str(prompt_id))]
+        if not match.empty:
+            print(f"User {user_id} has completed prompt {prompt_id}.")
+            return True
+    except pd.errors.EmptyDataError:
+        logger.warning(f"CSV file {PHASE1_RESULTS_CSV} is empty or malformed.")
+    except Exception as e:
+        logger.error(f"Error checking completion for user {user_id}, prompt {prompt_id}: {e}")
+
+    return False
+
+
+def get_completed_users() -> set[int]:
+    """Reads the Phase 2 CSV and returns a set of user_ids who have completed the survey."""
+    completed_users = set()
+    if not os.path.exists(PHASE2_RESULTS_CSV) or os.path.getsize(PHASE2_RESULTS_CSV) == 0:
+        return completed_users
+
+    try:
+        df = pd.read_csv(PHASE2_RESULTS_CSV, usecols=['user_id', 'timestamp_survey_completion'], dtype={'user_id': str})
+        completed_users = set(df[df['timestamp_survey_completion'].notna() & (df['timestamp_survey_completion'] != '')]['user_id'].astype(int).tolist())
+    except pd.errors.EmptyDataError:
+        logger.warning(f"CSV file {PHASE2_RESULTS_CSV} is empty or malformed.")
+    except Exception as e:
+        logger.error(f"Error reading completed users from Phase 2 CSV: {e}")
+    return completed_users
 
 def initialize_csv():
     """Initializes the CSV files with headers if they don't exist."""
@@ -183,3 +210,35 @@ def append_phase2_data(user_id: int, final_preference_data: dict):
         logger.info(f"Successfully appended Phase2 data for user {user_id}.")
     except Exception as e:
         logger.error(f"Error appending Phase2 data for user {user_id}: {e}")
+
+
+def get_phase1_results() -> pd.DataFrame:
+    """Reads the Phase 1 CSV into a pandas DataFrame for analysis."""
+    if not os.path.exists(PHASE1_RESULTS_CSV) or os.path.getsize(PHASE1_RESULTS_CSV) == 0:
+        return pd.DataFrame(columns=PHASE1_HEADERS)
+
+    try:
+        df = pd.read_csv(PHASE1_RESULTS_CSV, dtype={'user_id': str})
+        return df
+    except pd.errors.EmptyDataError:
+        logger.warning(f"CSV file {PHASE1_RESULTS_CSV} is empty or malformed.")
+        return pd.DataFrame(columns=PHASE1_HEADERS)
+    except Exception as e:
+        logger.error(f"Error reading Phase 1 results from CSV: {e}")
+        return pd.DataFrame(columns=PHASE1_HEADERS)
+
+def get_phase2_results() -> pd.DataFrame:
+    """Reads the Phase 2 CSV into a pandas DataFrame for analysis."""
+    if not os.path.exists(PHASE2_RESULTS_CSV) or os.path.getsize(PHASE2_RESULTS_CSV) == 0:
+        return pd.DataFrame(columns=PHASE2_HEADERS)
+
+    try:
+        df = pd.read_csv(PHASE2_RESULTS_CSV, dtype={'user_id': str})
+        return df
+    except pd.errors.EmptyDataError:
+        logger.warning(f"CSV file {PHASE2_RESULTS_CSV} is empty or malformed.")
+        return pd.DataFrame(columns=PHASE2_HEADERS)
+    except Exception as e:
+        logger.error(f"Error reading Phase 2 results from CSV: {e}")
+        return pd.DataFrame(columns=PHASE2_HEADERS)
+
