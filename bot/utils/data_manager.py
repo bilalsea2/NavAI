@@ -4,6 +4,7 @@ import csv
 import pandas as pd
 import logging
 from datetime import datetime
+import time
 import psycopg2
 from psycopg2.extras import execute_values
 from psycopg2 import OperationalError
