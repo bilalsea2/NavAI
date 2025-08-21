@@ -7,7 +7,7 @@ from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
 
 from bot.handlers import setup_routers
-from bot.utils.data_manager import initialize_csv, append_phase1_data, append_phase2_data, has_completed_prompt
+from bot.utils.data_manager import initialize_csv, append_phase1_data, append_phase2_data, has_completed_prompt, init_postgres_tables, sync_csv_with_postgres
 
 # Load environment variables from .env file
 load_dotenv()
@@ -34,8 +34,9 @@ async def main():
     storage = MemoryStorage()
     dp = Dispatcher(storage=storage)
 
-    # Initialize Phase 1 and Phase 2 CSV files if they don't exist
-    initialize_csv()
+    init_postgres_tables() # Initialize Postgres tables
+    sync_csv_with_postgres() # Load persisted Postgres → CSV
+    initialize_csv() # Initialize in-memory CSV
 
     # Register routers
     setup_routers(dp)

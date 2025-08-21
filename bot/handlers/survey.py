@@ -18,7 +18,7 @@ from bot.config import (
 )
 from bot.keyboards import get_rating_keyboard, get_phase2_preference_keyboard, RatingCallback, PreferenceCallback
 from bot.utils.audio_manager import get_audio_path
-from bot.utils.data_manager import append_phase1_data, append_phase2_data, has_completed_prompt
+from bot.utils.data_manager import append_phase1_data, append_phase2_data, has_completed_prompt, save_csv_to_postgres
 
 logger = logging.getLogger(__name__)
 router = Router()
@@ -325,8 +325,8 @@ async def handle_phase2_comment(message: Message, state: FSMContext):
     }
 
     # Save all data to CSV
-
     append_phase2_data(user_id, final_preference_data)
+    save_csv_to_postgres()
 
     await message.answer(
         "So‘rovnomani yakunlaganingiz uchun rahmat! Javoblaringiz saqlandi. "
