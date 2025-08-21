@@ -8,6 +8,7 @@ from aiogram.fsm.storage.memory import MemoryStorage
 
 from bot.handlers import setup_routers
 from bot.utils.data_manager import initialize_csv, append_phase1_data, append_phase2_data, has_completed_prompt, init_postgres_tables, sync_csv_with_postgres
+from aiogram.types import BotCommand
 
 # Load environment variables from .env file
 load_dotenv()
@@ -22,6 +23,17 @@ logging.basicConfig(
     ]
 )
 logger = logging.getLogger(__name__)
+
+async def set_commands(bot):
+    commands = [
+        BotCommand(command="start", description="Start the survey / Show progress"),
+        BotCommand(command="prompt_1", description="Start the first batch of questions"),
+        BotCommand(command="prompt_2", description="Start the second batch of questions"),
+        BotCommand(command="prompt_3", description="Start the third batch of questions"),
+        BotCommand(command="phase_2", description="Go to Phase 2 (final preference)"),
+        BotCommand(command="help", description="Show help"),
+    ]
+    await bot.set_my_commands(commands)
 
 async def main():
     bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
@@ -42,6 +54,7 @@ async def main():
     setup_routers(dp)
 
     logger.info("Bot started polling...")
+    await set_commands(bot)
     await dp.start_polling(bot)
 
 if __name__ == "__main__":

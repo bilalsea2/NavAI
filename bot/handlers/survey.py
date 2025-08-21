@@ -104,7 +104,7 @@ async def start_phase_2(message: Message, state: FSMContext):
     if user_id is not None and user_id in get_completed_users():
         await message.answer("✅ Siz so'rovnomani allaqachon tugallagansiz.")
         return
-    await initiate_prompt(message, state, prompt_idx=0)
+    await initiate_phase_2(message, state)
 
 async def send_next_audio_clip_or_finish_phase1(message: Message, state: FSMContext):
     data = await state.get_data()

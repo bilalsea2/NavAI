@@ -6,6 +6,7 @@ from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from bot.config import PROMPT_NUMBERS
 
+from bot.keyboards import get_progress_keyboard
 from bot.utils.data_manager import get_completed_users, has_completed_prompt
 
 logger = logging.getLogger(__name__)
@@ -54,7 +55,7 @@ async def start_command(message: Message, state: FSMContext):
         "Endi umumiy afzal ko‘rgan modelni tanlash uchun Phase 2 ga o‘ting.\n"
         "Boshlash uchun /phase_2 ni bosing.")
 
-    await message.answer(welcome_message + "\n\n" + progress_text)
+    await message.answer(welcome_message + "\n\n" + progress_text, reply_markup=get_progress_keyboard())
     await state.clear()
 
 
