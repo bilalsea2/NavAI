@@ -7,7 +7,7 @@ from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
 
 from bot.handlers import setup_routers
-from bot.utils.data_manager import initialize_csv, append_phase1_data, append_phase2_data
+from bot.utils.data_manager import initialize_csv, append_phase1_data, append_phase2_data, has_completed_prompt
 
 # Load environment variables from .env file
 load_dotenv()

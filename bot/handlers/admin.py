@@ -1,3 +1,4 @@
+# bot/handlers/admin.py
 import logging
 import pandas as pd
 import os
@@ -10,6 +11,39 @@ from bot.utils.data_manager import get_phase1_results, get_phase2_results
 
 logger = logging.getLogger(__name__)
 router = Router()
+
+@router.message(Command("admin_prompt_results"), F.from_user.id.in_(ADMIN_IDS))
+async def admin_prompt_results_command(message: Message):
+    try:
+        args = message.text.strip().split()
+        if len(args) < 2:
+            await message.answer("Usage: /admin_prompt_results <prompt_number>")
+            return
+        prompt_id = int(args[1])
+
+        df_phase1 = get_phase1_results()
+        if df_phase1.empty:
+            await message.answer("No Phase 1 results available.")
+            return
+
+        df_prompt = df_phase1[df_phase1['prompt_id'] == prompt_id]
+
+        if df_prompt.empty:
+            await message.answer(f"No results found for prompt {prompt_id}.")
+            return
+
+        avg_ratings = df_prompt.groupby('model_anonymous_label')['overall_preference_rating_phase1'].mean().sort_values(ascending=False)
+
+        summary_text = f"📊 **Prompt {prompt_id} Results** 📊\n\n"
+        for label, avg_score in avg_ratings.items():
+            summary_text += f"`{label}`: {avg_score:.2f}\n"
+
+        await message.answer(summary_text, parse_mode="Markdown")
+
+    except Exception as e:
+        logger.error(f"Error generating prompt results: {e}", exc_info=True)
+        await message.answer("An error occurred while fetching prompt results.")
+
 
 @router.message(Command("admin_results_summary"), F.from_user.id.in_(ADMIN_IDS))
 async def admin_results_summary_command(message: Message):

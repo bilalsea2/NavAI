@@ -1,3 +1,4 @@
+# bot/keyboards.py
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.filters.callback_data import CallbackData
 

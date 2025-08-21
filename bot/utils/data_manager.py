@@ -1,3 +1,4 @@
+# bot/utils/data_manager.py
 import os
 import csv
 import pandas as pd
@@ -24,6 +25,28 @@ def initialize_csv():
             except IOError as e:
                 logger.error(f"Error initializing CSV file {csv_path}: {e}")
 
+def has_completed_prompt(user_id: int, prompt_id: int) -> bool:
+    """
+    Check if a user already completed ratings for a given category & prompt_id.
+    Uses pandas for consistency with get_completed_users.
+    """
+    if not os.path.exists(PHASE1_RESULTS_CSV) or os.path.getsize(PHASE1_RESULTS_CSV) == 0:
+        return False
+
+    try:
+        df = pd.read_csv(PHASE1_RESULTS_CSV, usecols=['user_id', 'prompt_id'], dtype={'user_id': str, 'prompt_id': str})
+        match = df[(df['user_id'] == str(user_id)) & (df['prompt_id'] == str(prompt_id))]
+        if not match.empty:
+            print(f"User {user_id} has completed prompt {prompt_id}.")
+            return True
+    except pd.errors.EmptyDataError:
+        logger.warning(f"CSV file {PHASE1_RESULTS_CSV} is empty or malformed.")
+    except Exception as e:
+        logger.error(f"Error checking completion for user {user_id}, prompt {prompt_id}: {e}")
+
+    return False
+
+
 def get_completed_users() -> set[int]:
     """Reads the Phase 2 CSV and returns a set of user_ids who have completed the survey."""
     completed_users = set()
@@ -39,7 +62,7 @@ def get_completed_users() -> set[int]:
         logger.error(f"Error reading completed users from Phase 2 CSV: {e}")
     return completed_users
 
-def append_phase1_data(user_id: int, phase1_data: list[dict]):
+def append_phase1_data(user_id: int, phase1_data: list[dict], prompt_id: int = None):
     """Appends Phase 1 (audio ratings) data for a user to the Phase 1 CSV file."""
     if not phase1_data:
         logger.warning(f"No Phase 1 data to append for user {user_id}.")
@@ -48,15 +71,19 @@ def append_phase1_data(user_id: int, phase1_data: list[dict]):
     data_to_write = [row.copy() for row in phase1_data]
     for row in data_to_write:
         row['user_id'] = str(user_id)
+        if prompt_id is not None:
+            row['prompt_id'] = prompt_id
+
     try:
         with open(PHASE1_RESULTS_CSV, 'a', newline='', encoding='utf-8') as f:
             writer = csv.DictWriter(f, fieldnames=PHASE1_HEADERS)
             writer.writerows(data_to_write)
-        logger.info(f"Successfully appended Phase 1 data for user {user_id}.")
+        logger.info(f"Successfully appended Phase 1 data for user {user_id}, prompt {prompt_id}.")
     except IOError as e:
         logger.error(f"Error appending Phase 1 data for user {user_id} to CSV: {e}")
     except Exception as e:
         logger.error(f"Unexpected error during Phase 1 CSV write for user {user_id}: {e}")
+
 
 def append_phase2_data(user_id: int, final_preference_data: dict):
     """Appends Phase 2 (final preference) data for a user to the Phase 2 CSV file."""
@@ -101,3 +128,4 @@ def get_phase2_results() -> pd.DataFrame:
     except Exception as e:
         logger.error(f"Error reading Phase 2 results from CSV: {e}")
         return pd.DataFrame(columns=PHASE2_HEADERS)
+
