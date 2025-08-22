@@ -65,11 +65,9 @@ def sync_csv_with_postgres():
         rows = cur.fetchall()
         if rows:
             os.makedirs(os.path.dirname(PHASE1_RESULTS_CSV), exist_ok=True)
-            file_exists = os.path.exists(PHASE1_RESULTS_CSV) and os.path.getsize(PHASE1_RESULTS_CSV) > 0
             with open(PHASE1_RESULTS_CSV, "w", newline="", encoding="utf-8") as f:
-                writer = csv.DictWriter(f, fieldnames=PHASE1_HEADERS)
-                if not file_exists:
-                    writer.writeheader()
+                writer = csv.writer(f)
+                writer.writerow(PHASE1_HEADERS)
                 writer.writerows(rows)
             logger.info(f"Synced {len(rows)} Phase1 rows from Postgres → CSV.")
 
