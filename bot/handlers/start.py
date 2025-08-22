@@ -6,7 +6,7 @@ from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from bot.config import PROMPT_NUMBERS
 
-from bot.utils.data_manager import get_completed_users, has_completed_prompt
+from bot.utils.data_manager import has_completed_prompt, has_completed_phase2
 
 logger = logging.getLogger(__name__)
 router = Router()
@@ -17,8 +17,7 @@ async def start_command(message: Message, state: FSMContext):
     user_id = message.from_user.id
     logger.info(f"User {user_id} started the bot.")
 
-    completed_users = get_completed_users()
-    if user_id in completed_users:
+    if has_completed_phase2(user_id):
         await message.answer("✅ Siz so‘rovnomani to‘liq yakunlagansiz. Rahmat!")
         await state.clear()
         return
@@ -49,7 +48,7 @@ async def start_command(message: Message, state: FSMContext):
         "\n\nHar bir tugallanmagan promptni yuqoridagi buyruqlar orqali boshlashingiz mumkin."
     )
 
-    if all(has_completed_prompt(user_id, pid) for pid in PROMPT_NUMBERS):
+    if all(has_completed_prompt(user_id, pid) for pid in PROMPT_NUMBERS) and not :
         progress_text += ("\n\n🎯 Siz barcha promptlarni tugalladingiz! "
         "Endi umumiy afzal ko‘rgan modelni tanlash uchun Phase 2 ga o‘ting.\n"
         "Boshlash uchun /phase_2 ni bosing.")
@@ -62,8 +61,7 @@ async def progress_command(message: Message, state: FSMContext):
     user_id = message.from_user.id
     logger.info(f"User {user_id} requested progress.")
 
-    completed_users = get_completed_users()
-    if user_id in completed_users:
+    if has_completed_phase2(user_id):
         await message.answer("✅ Siz so‘rovnomani to‘liq yakunlagansiz. Rahmat!")
         await state.clear()
         return

@@ -145,7 +145,25 @@ def has_completed_prompt(user_id: int, prompt_id: int) -> bool:
 
     return False
 
+def has_completed_phase2(user_id: int) -> bool:
+    """
+    Check if a user has completed Phase 2 of the survey.
+    """
+    if not os.path.exists(PHASE2_RESULTS_CSV) or os.path.getsize(PHASE2_RESULTS_CSV) == 0:
+        return False
 
+    try:
+        df = pd.read_csv(PHASE2_RESULTS_CSV, dtype=str)
+
+        # Check required columns exist
+        if not {'user_id'}.issubset(df.columns):
+            logger.warning(f"CSV {PHASE2_RESULTS_CSV} missing required headers.")
+            return False
+
+        match = df[df['user_id'] == str(user_id)]
+        if not match.empty:
+            print(f"User {user_id} has completed Phase 2.")
+            return True
 
 def get_completed_users() -> set[int]:
     """Reads the Phase 2 CSV and returns a set of user_ids who have completed the survey."""
