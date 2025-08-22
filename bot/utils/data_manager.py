@@ -37,16 +37,18 @@ def init_postgres_tables():
         cur.execute(f"""
         CREATE TABLE IF NOT EXISTS phase1_results (
             id SERIAL PRIMARY KEY,
-            user_id TEXT,
+            user_id TEXT NOT NULL,
             prompt_id TEXT,
-            {', '.join([f"{col} TEXT" for col in PHASE1_HEADERS if col not in ['user_id','prompt_id']])}
+            timestamp_evaluation TIMESTAMP,
+            {', '.join([f"{col} TEXT" for col in PHASE1_HEADERS if col not in ['user_id','prompt_id', 'timestamp_evaluation']])}
         );
         """)
         cur.execute(f"""
         CREATE TABLE IF NOT EXISTS phase2_results (
             id SERIAL PRIMARY KEY,
-            user_id TEXT,
-            {', '.join([f"{col} TEXT" for col in PHASE2_HEADERS if col != 'user_id'])}
+            user_id TEXT NOT NULL,
+            timestamp_survey_completion TIMESTAMP,
+            {', '.join([f"{col} TEXT" for col in PHASE2_HEADERS if col not in ['user_id', 'timestamp_survey_completion']])}
         );
         """)
         conn.commit()
@@ -63,9 +65,11 @@ def sync_csv_with_postgres():
         rows = cur.fetchall()
         if rows:
             os.makedirs(os.path.dirname(PHASE1_RESULTS_CSV), exist_ok=True)
+            file_exists = os.path.exists(PHASE1_RESULTS_CSV) and os.path.getsize(PHASE1_RESULTS_CSV) > 0
             with open(PHASE1_RESULTS_CSV, "w", newline="", encoding="utf-8") as f:
-                writer = csv.writer(f)
-                writer.writerow(PHASE1_HEADERS)
+                writer = csv.DictWriter(f, fieldnames=PHASE1_HEADERS)
+                if not file_exists:
+                    writer.writeheader()
                 writer.writerows(rows)
             logger.info(f"Synced {len(rows)} Phase1 rows from Postgres → CSV.")
 
@@ -74,9 +78,11 @@ def sync_csv_with_postgres():
         rows = cur.fetchall()
         if rows:
             os.makedirs(os.path.dirname(PHASE2_RESULTS_CSV), exist_ok=True)
+            file_exists = os.path.exists(PHASE2_RESULTS_CSV) and os.path.getsize(PHASE2_RESULTS_CSV) > 0
             with open(PHASE2_RESULTS_CSV, "w", newline="", encoding="utf-8") as f:
-                writer = csv.writer(f)
-                writer.writerow(PHASE2_HEADERS)
+                writer = csv.DictWriter(f, fieldnames=PHASE2_HEADERS)
+                if not file_exists:
+                    writer.writeheader()
                 writer.writerows(rows)
             logger.info(f"Synced {len(rows)} Phase2 rows from Postgres → CSV.")
 
@@ -90,8 +96,8 @@ def save_csv_to_postgres():
         # Phase1
         if os.path.exists(PHASE1_RESULTS_CSV):
             df = pd.read_csv(PHASE1_RESULTS_CSV, dtype=str)
-            cur.execute("DELETE FROM phase1_results;")
             if not df.empty:
+                cur.execute("DELETE FROM phase1_results;")
                 execute_values(
                     cur,
                     f"INSERT INTO phase1_results ({','.join(PHASE1_HEADERS)}) VALUES %s",
@@ -123,17 +129,25 @@ def has_completed_prompt(user_id: int, prompt_id: int) -> bool:
         return False
 
     try:
-        df = pd.read_csv(PHASE1_RESULTS_CSV, usecols=['user_id', 'prompt_id'], dtype={'user_id': str, 'prompt_id': str})
+        df = pd.read_csv(PHASE1_RESULTS_CSV, dtype=str)
+
+        # Check required columns exist
+        if not {'user_id', 'prompt_id'}.issubset(df.columns):
+            logger.warning(f"CSV {PHASE1_RESULTS_CSV} missing required headers.")
+            return False
+
         match = df[(df['user_id'] == str(user_id)) & (df['prompt_id'] == str(prompt_id))]
         if not match.empty:
             print(f"User {user_id} has completed prompt {prompt_id}.")
             return True
+
     except pd.errors.EmptyDataError:
         logger.warning(f"CSV file {PHASE1_RESULTS_CSV} is empty or malformed.")
     except Exception as e:
         logger.error(f"Error checking completion for user {user_id}, prompt {prompt_id}: {e}")
 
     return False
+
 
 
 def get_completed_users() -> set[int]:
@@ -144,7 +158,7 @@ def get_completed_users() -> set[int]:
 
     try:
         df = pd.read_csv(PHASE2_RESULTS_CSV, usecols=['user_id', 'timestamp_survey_completion'], dtype={'user_id': str})
-        completed_users = set(df[df['timestamp_survey_completion'].notna() & (df['timestamp_survey_completion'] != '')]['user_id'].astype(int).tolist())
+        completed_users = set(df.loc[df['timestamp_survey_completion'].notna(), 'user_id'].astype(str))
     except pd.errors.EmptyDataError:
         logger.warning(f"CSV file {PHASE2_RESULTS_CSV} is empty or malformed.")
     except Exception as e:
@@ -182,8 +196,11 @@ def append_phase1_data(user_id: int, phase1_data: list[dict], prompt_id: int = N
 
     try:
         # Write CSV
+        file_exists = os.path.exists(PHASE1_RESULTS_CSV) and os.path.getsize(PHASE1_RESULTS_CSV) > 0
         with open(PHASE1_RESULTS_CSV, 'a', newline='', encoding='utf-8') as f:
             writer = csv.DictWriter(f, fieldnames=PHASE1_HEADERS)
+            if not file_exists:
+                writer.writeheader()
             writer.writerows(data_to_write)
 
         # Write Postgres
@@ -207,15 +224,19 @@ def append_phase2_data(user_id: int, final_preference_data: dict):
 
     try:
         # Write CSV
+        file_exists = os.path.exists(PHASE2_RESULTS_CSV) and os.path.getsize(PHASE2_RESULTS_CSV) > 0
         with open(PHASE2_RESULTS_CSV, 'a', newline='', encoding='utf-8') as f:
             writer = csv.DictWriter(f, fieldnames=PHASE2_HEADERS)
+            if not file_exists:
+                writer.writeheader()
             writer.writerow(row)
 
         # Write Postgres
         with get_db_connection() as conn, conn.cursor() as cur:
-            cur.execute(
+            execute_values(
+                cur,
                 f"INSERT INTO phase2_results ({','.join(PHASE2_HEADERS)}) VALUES %s",
-                ([row[h] for h in PHASE2_HEADERS],)
+                [[row[h] for h in PHASE2_HEADERS]]
             )
             conn.commit()
 
