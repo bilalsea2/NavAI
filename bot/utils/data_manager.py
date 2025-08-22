@@ -164,21 +164,9 @@ def has_completed_phase2(user_id: int) -> bool:
         if not match.empty:
             print(f"User {user_id} has completed Phase 2.")
             return True
-
-def get_completed_users() -> set[int]:
-    """Reads the Phase 2 CSV and returns a set of user_ids who have completed the survey."""
-    completed_users = set()
-    if not os.path.exists(PHASE2_RESULTS_CSV) or os.path.getsize(PHASE2_RESULTS_CSV) == 0:
-        return completed_users
-
-    try:
-        df = pd.read_csv(PHASE2_RESULTS_CSV, usecols=['user_id', 'timestamp_survey_completion'], dtype={'user_id': str})
-        completed_users = set(df.loc[df['timestamp_survey_completion'].notna(), 'user_id'].astype(str))
-    except pd.errors.EmptyDataError:
-        logger.warning(f"CSV file {PHASE2_RESULTS_CSV} is empty or malformed.")
     except Exception as e:
-        logger.error(f"Error reading completed users from Phase 2 CSV: {e}")
-    return completed_users
+        logger.error(f"Error checking completion for user {user_id} in Phase 2: {e}")
+    return False
 
 def initialize_csv():
     """Initializes the CSV files with headers if they don't exist."""
