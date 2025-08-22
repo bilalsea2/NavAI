@@ -76,13 +76,12 @@ def sync_csv_with_postgres():
         rows = cur.fetchall()
         if rows:
             os.makedirs(os.path.dirname(PHASE2_RESULTS_CSV), exist_ok=True)
-            file_exists = os.path.exists(PHASE2_RESULTS_CSV) and os.path.getsize(PHASE2_RESULTS_CSV) > 0
             with open(PHASE2_RESULTS_CSV, "w", newline="", encoding="utf-8") as f:
-                writer = csv.DictWriter(f, fieldnames=PHASE2_HEADERS)
-                if not file_exists:
-                    writer.writeheader()
+                writer = csv.writer(f)
+                writer.writerow(PHASE2_HEADERS)
                 writer.writerows(rows)
             logger.info(f"Synced {len(rows)} Phase2 rows from Postgres → CSV.")
+
 
 
 def save_csv_to_postgres():
@@ -199,7 +198,17 @@ def append_phase1_data(user_id: int, phase1_data: list[dict], prompt_id: int = N
             writer = csv.DictWriter(f, fieldnames=PHASE1_HEADERS)
             if not file_exists:
                 writer.writeheader()
-            writer.writerows(data_to_write)
+            
+            # Ensure data_to_write is a list of dicts
+            if isinstance(data_to_write, dict):
+                writer.writerow(data_to_write)  # single dict
+            elif all(isinstance(row, dict) for row in data_to_write):
+                writer.writerows(data_to_write)  # list of dicts
+            else:
+                # Convert from tuple/list → dict
+                converted = [dict(zip(PHASE1_HEADERS, row)) for row in data_to_write]
+                writer.writerows(converted)
+        
 
         # Write Postgres
         with get_db_connection() as conn, conn.cursor() as cur:
