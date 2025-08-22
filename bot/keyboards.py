@@ -12,16 +12,6 @@ class RatingCallback(CallbackData, prefix="rating"): # type: ignore
 class PreferenceCallback(CallbackData, prefix="preference"): # type: ignore
     model_label: str
 
-def get_progress_keyboard():
-    keyboard = ReplyKeyboardMarkup(
-        keyboard=[
-            [KeyboardButton(text="📊 Progress")]
-        ],
-        resize_keyboard=True,
-        one_time_keyboard=True
-    )
-    return keyboard
-
 def get_rating_keyboard(question_key: str) -> InlineKeyboardMarkup:
     buttons = []
     for value in RATING_SCALE:

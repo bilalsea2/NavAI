@@ -55,7 +55,40 @@ async def start_command(message: Message, state: FSMContext):
         "Endi umumiy afzal ko‘rgan modelni tanlash uchun Phase 2 ga o‘ting.\n"
         "Boshlash uchun /phase_2 ni bosing.")
 
-    await message.answer(welcome_message + "\n\n" + progress_text, reply_markup=get_progress_keyboard())
+    await message.answer(welcome_message + "\n\n" + progress_text)
+    await state.clear()
+
+@router.message(Command("progress"))
+async def progress_command(message: Message, state: FSMContext):
+    user_id = message.from_user.id
+    logger.info(f"User {user_id} requested progress.")
+
+    completed_users = get_completed_users()
+    if user_id in completed_users:
+        await message.answer("✅ Siz so‘rovnomani to‘liq yakunlagansiz. Rahmat!")
+        await state.clear()
+        return
+
+    # Build progress message
+    progress_lines = []
+    for prompt_id in PROMPT_NUMBERS:
+        if has_completed_prompt(user_id, prompt_id):
+            progress_lines.append(f"✅ Prompt {prompt_id} tugallangan")
+        else:
+            progress_lines.append(f"❌ Prompt {prompt_id} bajarilmagan (boshlash uchun /prompt_{prompt_id} bosing)")
+
+    progress_text = (
+        "📊 Sizning so‘rovnoma progressingiz:\n\n" +
+        "\n".join(progress_lines) +
+        "\n\nHar bir tugallanmagan promptni yuqoridagi buyruqlar orqali boshlashingiz mumkin."
+    )
+
+    if all(has_completed_prompt(user_id, pid) for pid in PROMPT_NUMBERS):
+        progress_text += ("\n\n🎯 Siz barcha promptlarni tugalladingiz! "
+        "Endi umumiy afzal ko‘rgan modelni tanlash uchun Phase 2 ga o‘ting.\n"
+        "Boshlash uchun /phase_2 ni bosing.")
+
+    await message.answer(progress_text)
     await state.clear()
 
 

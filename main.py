@@ -31,6 +31,7 @@ async def set_commands(bot):
         BotCommand(command="prompt_2", description="Start the second batch of questions"),
         BotCommand(command="prompt_3", description="Start the third batch of questions"),
         BotCommand(command="phase_2", description="Go to Phase 2 (final preference)"),
+        BotCommand(command="progress", description="Show your progress"),
     ]
     await bot.set_my_commands(commands)
 
