@@ -198,7 +198,7 @@ def append_phase1_data(user_id: int, phase1_data: list[dict], prompt_id: int = N
             writer = csv.DictWriter(f, fieldnames=PHASE1_HEADERS)
             if not file_exists:
                 writer.writeheader()
-            
+
             # Ensure data_to_write is a list of dicts
             if isinstance(data_to_write, dict):
                 writer.writerow(data_to_write)  # single dict
@@ -208,7 +208,7 @@ def append_phase1_data(user_id: int, phase1_data: list[dict], prompt_id: int = N
                 # Convert from tuple/list → dict
                 converted = [dict(zip(PHASE1_HEADERS, row)) for row in data_to_write]
                 writer.writerows(converted)
-        
+
 
         # Write Postgres
         with get_db_connection() as conn, conn.cursor() as cur:
@@ -236,7 +236,13 @@ def append_phase2_data(user_id: int, final_preference_data: dict):
             writer = csv.DictWriter(f, fieldnames=PHASE2_HEADERS)
             if not file_exists:
                 writer.writeheader()
-            writer.writerow(row)
+            
+            if isinstance(row, dict):
+                writer.writerow(row)  # already good
+            else:
+                # Convert tuple/list → dict
+                writer.writerow(dict(zip(PHASE2_HEADERS, row)))
+        
 
         # Write Postgres
         with get_db_connection() as conn, conn.cursor() as cur:
