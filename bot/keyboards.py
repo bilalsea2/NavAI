@@ -3,6 +3,7 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.filters.callback_data import CallbackData
 
 from bot.config import RATING_SCALE, ANONYMOUS_LABELS
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
 class RatingCallback(CallbackData, prefix="rating"): # type: ignore
     question_key: str
@@ -12,10 +13,12 @@ class PreferenceCallback(CallbackData, prefix="preference"): # type: ignore
     model_label: str
 
 def get_progress_keyboard():
-    keyboard = InlineKeyboardMarkup(
-        inline_keyboard=[
-            [InlineKeyboardButton(text="📊 Progress", callback_data="show_progress")]
-        ]
+    keyboard = ReplyKeyboardMarkup(
+        keyboard=[
+            [KeyboardButton(text="📊 Progress")]
+        ],
+        resize_keyboard=True,
+        one_time_keyboard=True
     )
     return keyboard
 

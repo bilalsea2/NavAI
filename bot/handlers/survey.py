@@ -334,15 +334,15 @@ async def handle_phase2_comment(message: Message, state: FSMContext):
     await state.update_data(final_comment=comment)
     logger.info(f"User {user_id}: Final comment received: '{comment}'.")
 
-    all_phase1_data = data.get("all_phase1_data", [])
     final_preferred_model_anonymous_label = data.get("final_preferred_model_anonymous_label")
     final_preferred_model_actual_name = data.get("final_preferred_model_actual_name")
 
-    if not all_phase1_data:
-        logger.error(f"User {user_id}: No Phase 1 data found for completion.")
-        await message.answer("Xatolik yuz berdi. So‘rovnoma ma'lumotlaringiz saqlanmadi. Iltimos, keyinroq qayta urinib ko‘ring.")
+    if not final_preferred_model_anonymous_label:
+        logger.error(f"User {user_id}: Phase 2 reached without a preference selection.")
+        await message.answer("Xatolik yuz berdi. Iltimos, qayta urinib ko‘ring.")
         await state.clear()
         return
+
 
     final_preference_data = {
         'final_preferred_model_anonymous_label': final_preferred_model_anonymous_label,
