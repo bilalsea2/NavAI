@@ -6,7 +6,6 @@ from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from bot.config import PROMPT_NUMBERS
 
-from bot.keyboards import get_progress_keyboard
 from bot.utils.data_manager import get_completed_users, has_completed_prompt
 
 logger = logging.getLogger(__name__)
